@@ -11,6 +11,9 @@ wsiloids = predator
 """
 
 cells= []
+preys = []
+predators = []
+food_units = []
 
 
 class cell(QLabel):
@@ -19,7 +22,7 @@ class cell(QLabel):
         self.setFixedWidth(40)
         self.setFixedHeight(40)
         self.setScaledContents(True)
-        self.setPixmap(QPixmap("void.png"))
+        self.setPixmap(QPixmap("images/void.png"))
         self.coordinates = (x, y)
         
     def set_ocupant(self, ocupant):
@@ -32,7 +35,7 @@ class cell(QLabel):
     def get_coordinates(self):
         return self.coordinates
 
-    def ocupant_type_code():
+    def ocupant_type_code(self):
         if isinstance(self.ocupant, food):
             return 3
         elif isinstance(self.ocupant, predator):
@@ -43,31 +46,14 @@ class cell(QLabel):
             return 0
 
 class item():
-    def __init__():
-        self.cell = cells[x][y]
-        self.coordinates = (x, y)
-        self.set_orientation("left")
-
-
-class food():
-    def __init__():
-        self.energy = 10
-        
-
-preys = []
-predators = []
-food_units = []
-
-class being(item):
     def __init__(self, x, y):
-        self.energy = 100
-        
-        vision = []
-        
+        self.coordinates = (x, y)
+        self.cell = cells[x][y]
+        self.set_orientation("down")
+
 
     def move(self, x, y):
-        print(x, y)
-        self.cell.setPixmap(QPixmap("void.png"))
+        self.cell.setPixmap(QPixmap("images/void.png"))
         if x < 0:
             x = 9
         if x > 9:
@@ -76,23 +62,67 @@ class being(item):
             y = 14  
         if y > 14:
             y = 0
-        print(x, y)
         self.coordinates = (x, y)
         self.cell = cells[x][y]
-        print(self.cell.get_coordinates())
+
+class food():
+    def __init__(self):
+        self.energy = 10
+        
+
+
+
+class being(item):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.energy = 100
+        
+        
+        self.vision = []
+
+        
+
+    
 
         
     
-    def vision():
+    def see(self):
+        self.vision.clear()
+        rows, cols = range(len(cells)),range(len(cells[0]))
         if self.orientation == "down":
-            
+            neighbours = [(0,1), (1, 1), (1, 0), (1, -1), (0, -1)]
         elif self.orientation == "up":
+            neighbours = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0)]
         elif self.orientation == "right":
+            neighbours = [(0, -1), (-1, -1), (-1, 0), (-1, 1), (0, 1)]
         else:
-
-
-
+            neighbours = [(1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0)]
         
+        for x, y in neighbours:
+            x, y = self.coordinates[0]+x, self.coordinates[1]+y
+
+            if x < 0:
+                x = 9
+            if x > 9:
+                x = 0
+            if y < 0:
+                y = 14  
+            if y > 14:
+                y = 0
+
+            # if x in rows and y in cols:
+            self.vision.append(cells[x][y])
+            # elif x in rows and y not in cols and y == 15:
+            #     self.vision.append(cells[x][0])
+            # elif x in rows and y not in cols and y == 0:
+            #     self.vision.append(cells[x][14])
+            # elif x not in rows and x ==  and y in cols:
+            #     self.vision.append(cells[0][y])
+                
+        for cell in self.vision:
+            print(cell.get_coordinates())
+        
+
     def move_left(self):
         if self.orientation == "down":
             self.move(self.coordinates[0], self.coordinates[1]+1)
@@ -169,19 +199,11 @@ class being(item):
     def get_image(self):
         return self.image
 
-
-    
-
-
-
-  
-
 class prey(being):
     def __init__(self, x, y):
         super().__init__(x, y)
         preys.append(self)
         
-
     def set_orientation(self, orientation):
         self.orientation = orientation
         if orientation =="down":
@@ -193,14 +215,10 @@ class prey(being):
         else:
             self.set_image("images/prey_left.png")
 
-    
-
-
 class predator(being):
     def __init__(self):
         super().__init__(x, y)
         predators.append(self)
-        
 
     def set_orientation(self, orientation):
         self.orientation = orientation
@@ -214,17 +232,17 @@ class predator(being):
             self.set_image("images/predator_left.png")
 
 
-
-
 class MyGUI(QMainWindow):
     def __init__(self):
         super(MyGUI, self).__init__()
         uic.loadUi("ui/gui.ui", self)
         self.initialize()
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.iterate)
-        self.timer.start(500)
+        self.iterate()
+
+        # self.timer = QTimer()
+        # self.timer.timeout.connect(self.iterate)
+        # self.timer.start(200)
 
     def initialize(self):
         for i in range(0, 10):
@@ -235,13 +253,12 @@ class MyGUI(QMainWindow):
                 self.table.addWidget(mycell, i, j)
             cells.append(cell_row)
 
-        prey_1 = prey(0, 5)
-        preys.append(prey_1)
+        prey_1 = prey(9, 14)
 
         
 
     def iterate(self):
-        preys[0].move_forward_right()
+        preys[0].see()
 
     
 
