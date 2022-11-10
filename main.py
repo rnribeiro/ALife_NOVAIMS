@@ -85,7 +85,7 @@ class being(item):
     
     def vision():
         if self.orientation == "down":
-
+            
         elif self.orientation == "up":
         elif self.orientation == "right":
         else:
@@ -185,13 +185,13 @@ class prey(being):
     def set_orientation(self, orientation):
         self.orientation = orientation
         if orientation =="down":
-            self.set_image("predator_down.png")
+            self.set_image("images/prey_down.png")
         elif orientation == "up":
-            self.set_image("predator_up.png")
+            self.set_image("images/prey_up.png")
         elif orientation == "right":
-            self.set_image("predator_right.png")
+            self.set_image("images/prey_right.png")
         else:
-            self.set_image("predator_left.png")
+            self.set_image("images/prey_left.png")
 
     
 
@@ -205,13 +205,13 @@ class predator(being):
     def set_orientation(self, orientation):
         self.orientation = orientation
         if orientation =="down":
-            self.set_image("predator_down.png")
+            self.set_image("images/predator_down.png")
         elif orientation == "up":
-            self.set_image("predator_up.png")
+            self.set_image("images/predator_up.png")
         elif orientation == "right":
-            self.set_image("predator_right.png")
+            self.set_image("images/predator_right.png")
         else:
-            self.set_image("predator_left.png")
+            self.set_image("images/predator_left.png")
 
 
 
@@ -219,7 +219,7 @@ class predator(being):
 class MyGUI(QMainWindow):
     def __init__(self):
         super(MyGUI, self).__init__()
-        uic.loadUi("gui.ui", self)
+        uic.loadUi("ui/gui.ui", self)
         self.initialize()
 
         self.timer = QTimer()
