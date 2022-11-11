@@ -95,21 +95,24 @@ class item():
     def get_coordinates(self):
         return self.coordinates
     def move(self, x, y):
+        if x < 0:
+            x = 9
+        if x > 9:
+            x = 0
+        if y < 0:
+            y = 14  
+        if y > 14:
+            y = 0
         if not cells[x][y].get_occupant():
             self.cell.setPixmap(QPixmap("images/void.png"))
             self.cell.set_occupant(None)
-            if x < 0:
-                x = 9
-            if x > 9:
-                x = 0
-            if y < 0:
-                y = 14  
-            if y > 14:
-                y = 0
             self.coordinates = (x, y)
             self.cell = cells[x][y]
-        # else:
-        #     if isinstance(self, prey) and 
+        else:
+            if isinstance(self, prey):
+                print("prey tried to move to occupied cell")
+            elif isinstance(self, predator):
+                print("predator tried to move to occupied cell")
 
     def set_image(self, image):
         self.image = QPixmap(image)
@@ -152,6 +155,26 @@ class being(item):
             self.rotate()
         else:
             self.stop()
+
+    def make_random_move(self):
+        self.random_move = random.randint(0, 9)
+        if self.random_move == 0:
+            self.move_left()
+        elif self.random_move == 1:
+            self.move_forward_left()
+        elif self.random_move == 2:
+            self.move_forward()
+        elif self.random_move == 3:
+            self.move_forward_right()
+        elif self.random_move == 4:
+            self.move_right()
+        elif self.random_move == 5:
+            self.move_back()
+        elif self.random_move == 6:
+            self.rotate()
+        else:
+            self.stop()
+        
 
         
     def see(self):
@@ -348,8 +371,12 @@ class MyGUI(QMainWindow):
         
     def iterate(self):
         if self.active:
+            random.shuffle(preys)
+            random.shuffle(predators)
             for prey in preys:
                 prey.make_best_move()
+            for predator in predators:
+                predator.make_random_move()
 
 def main():
     app = QApplication([])
