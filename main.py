@@ -4,7 +4,8 @@ from PyQt5.QtGui import *
 from PyQt5 import uic
 import random 
 from numpy import *
-# from ann import *
+from neural_network import *
+
 """
 For simplicity:
 zizoid = prey
@@ -16,43 +17,12 @@ cells= []
 preys = []
 predators = []
 food_units = []
-
-from joblib.numpy_pickle_utils import xrange
-from numpy import *
-class neural_network(object):
-    def __init__(self):
-        # Generate random numbers
-        # random.seed(1) 
-  
-        # Assign random weights to a 5 x 8 matrix,
-        self.synaptic_weights = divide(random.randint(1, 1000, size=(5, 8)), 1000)
-  
-    # The Sigmoid function
-    def __sigmoid(self, x):
-        return 1 / (1 + exp(-x))
-  
-    # The derivative of the Sigmoid function.
-    # This is the gradient of the Sigmoid curve.
-    def __sigmoid_derivative(self, x):
-        return x * (1 - x)
-  
-    # Train the neural network and adjust the weights each time.
-    def train(self, inputs, outputs, training_iterations):
-        for iteration in xrange(training_iterations):
-            # Pass the training set through the network.
-            output = self.learn(inputs)
-  
-            # Calculate the error
-            error = outputs - output
-  
-            # Adjust the weights by a factor
-            factor = dot(inputs.T, error * self.__sigmoid_derivative(output))
-            self.synaptic_weights += factor
-  
-        # The neural network thinks.
-  
-    def learn(self, inputs):
-        return self.__sigmoid(dot(inputs, self.synaptic_weights))
+initial_energy = 0
+mutation_rate = 0
+likelihood_reproduction = 0
+food_energy = 0
+reproduction_energy = 0
+max_preys = 0
 
 class cell(QLabel):
     def __init__(self, x, y):
@@ -94,6 +64,7 @@ class item():
         self.set_orientation("up")
     def get_coordinates(self):
         return self.coordinates
+
     def move(self, x, y):
         if x < 0:
             x = 9
@@ -109,10 +80,46 @@ class item():
             self.coordinates = (x, y)
             self.cell = cells[x][y]
         else:
-            if isinstance(self, prey):
-                print("prey tried to move to occupied cell")
-            elif isinstance(self, predator):
-                print("predator tried to move to occupied cell")
+            if isinstance(self, prey) and isinstance(cells[x][y].get_occupant(), prey):
+                self.stop()
+            if isinstance(self, prey) and isinstance(cells[x][y].get_occupant(), food):
+                self.lose_mov_energy()
+                self.eat_food(cells[x][y].get_occupant())
+                cells[x][y].set_occupant(None)
+                self.cell.setPixmap(QPixmap("images/void.png"))
+                self.cell.set_occupant(None)
+                self.coordinates = (x, y)
+                self.cell = cells[x][y]
+            if isinstance(self, prey) and isinstance(cells[x][y].get_occupant(), predator):
+                cells[x][y].eat_prey(self)
+                self.cell.setPixmap(QPixmap("images/void.png"))
+                self.cell.set_occupant(None)
+                self.die()
+            
+            
+            if isinstance(self, predator) and isinstance(cells[x][y].get_occupant(), food):
+                self.eat_food(cells[x][y].get_occupant())
+                cells[x][y].set_occupant(None)
+                self.cell.setPixmap(QPixmap("images/void.png"))
+                self.cell.set_occupant(None)
+                self.coordinates = (x, y)
+                self.cell = cells[x][y]
+                self.lose_mov_energy()
+            
+            if isinstance(self, predator) and isinstance(cells[x][y].get_occupant(), predator):
+                self.stop()
+
+            if isinstance(self, predator) and isinstance(cells[x][y].get_occupant(), prey):
+                self.eat_prey(cells[x][y].get_occupant())
+                self.cell.setPixmap(QPixmap("images/void.png"))
+                self.cell.set_occupant(None)
+                self.coordinates = (x, y)
+                self.cell = cells[x][y]
+                self.lose_mov_energy()
+
+            
+            
+            
 
     def set_image(self, image):
         self.image = QPixmap(image)
@@ -124,16 +131,27 @@ class food(item):
     def __init__(self, x, y):
         super().__init__(x, y)
         food_units.append(self)
-        self.energy = 10
+        self.energy = food_energy
     def set_orientation(self, orientation):
         self.set_image("images/food.png")
-        
+    def get_energy(self):
+        return self.energy
+
 class being(item):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.energy = 100
+        self.energy = initial_energy
         self.vision = []
         self.neural_network = neural_network()
+        self.gender = random.choice(['m', 'f'])
+        self.move_cost = 10
+
+
+    def lose_mov_energy(self):
+        self.energy -= self.move_cost
+
+    def eat_food(self, food):
+        self.energy += food.get_energy()
 
     def make_best_move(self):
         self.see()
@@ -174,9 +192,6 @@ class being(item):
             self.rotate()
         else:
             self.stop()
-        
-
-        
     def see(self):
         self.vision.clear()
         if self.orientation == "down":
@@ -200,7 +215,6 @@ class being(item):
                 y = 0
             type = cells[x][y].get_occupant_type_code()
             self.vision.append(type)
-
     def move_left(self):
         if self.orientation == "down":
             self.move(self.coordinates[0], self.coordinates[1]+1)
@@ -311,14 +325,13 @@ class MyGUI(QMainWindow):
         self.items_created = False
         self.initialize_grid()
 
-
         self.start_btn.clicked.connect(self.start)
         self.pause_btn.clicked.connect(self.pause)
         self.stop_btn.clicked.connect(self.stop)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.iterate)
-        self.timer.start(500)
+        self.timer.start(1000)
 
     def start(self):
         if not self.items_created:
@@ -343,7 +356,6 @@ class MyGUI(QMainWindow):
 
         self.items_created = False
 
-
     def initialize_grid(self):
         for i in range(0, 10):
             cell_row = []
@@ -367,6 +379,12 @@ class MyGUI(QMainWindow):
                 x, y = random.randint(0, 9), random.randint(0, 14)
                 if not cells[x][y].get_occupant():
                     a = predator(x, y)
+                    break
+        for i in range(6):
+            while True:
+                x, y = random.randint(0, 9), random.randint(0, 14)
+                if not cells[x][y].get_occupant():
+                    a = food(x, y)
                     break
         
     def iterate(self):
