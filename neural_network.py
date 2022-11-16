@@ -1,6 +1,8 @@
 from joblib.numpy_pickle_utils import xrange
 from numpy import *
-class neural_network(object):
+
+
+class NeuralNetwork(object):
     def __init__(self):
         # Generate random numbers
         # random.seed(1) 
@@ -11,12 +13,12 @@ class neural_network(object):
     # The Sigmoid function
     def __sigmoid(self, x):
         return 1 / (1 + exp(-x))
-  
+
     # The derivative of the Sigmoid function.
     # This is the gradient of the Sigmoid curve.
     def __sigmoid_derivative(self, x):
         return x * (1 - x)
-  
+
     # Train the neural network and adjust the weights each time.
     def train(self, inputs, outputs, training_iterations):
         for iteration in xrange(training_iterations):
