@@ -5,8 +5,8 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QMainWindow
 
-from items import Prey, Predator, Food
-from items import cells, preys, predators, food_units
+from items import Prey, Predator, Food, cells, preys, predators, food_units
+from cell import Cell
 
 
 class MyGUI(QMainWindow):
@@ -53,7 +53,7 @@ class MyGUI(QMainWindow):
         for i in range(0, 10):
             cell_row = []
             for j in range(0, 15):
-                my_cell = cell(i, j)
+                my_cell = Cell(i, j)
                 cell_row.append(my_cell)
                 self.table.addWidget(my_cell, i, j)
             cells.append(cell_row)
