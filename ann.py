@@ -1,11 +1,9 @@
 from joblib.numpy_pickle_utils import xrange
 from numpy import *
 
-
 class NeuralNetwork(object):
     def __init__(self):
-        # Generate random numbers
-        # random.seed(1) 
+        
 
         # Assign random weights to a 5 x 8 matrix,
         self.synaptic_weights = divide(random.randint(-1000, 1000, size=(5, 8)), 1000)
@@ -32,14 +30,13 @@ class NeuralNetwork(object):
             factor = dot(inputs.T, error * self.__sigmoid_derivative(output))
             self.synaptic_weights += factor
 
-        # The neural network thinks.
-
+    # The neural network thinks.
     def learn(self, inputs):
         return self.__sigmoid(dot(inputs, self.synaptic_weights))
 
 
 neural_network = NeuralNetwork()
-# print(neural_network.synaptic_weights)
+print(neural_network.synaptic_weights)
 
 # The training set.
 inputs = array([1, 3, 2, 0, 0])
@@ -49,4 +46,4 @@ inputs = array([1, 3, 2, 0, 0])
 # neural_network.train(inputs, outputs, 100000)
 
 # Test the neural network with a test example.
-print(neural_network.learn(inputs))
+# print(neural_network.learn(inputs))

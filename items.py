@@ -51,6 +51,7 @@ class Item(ABC):
             self.coordinates = (x, y)
             self.cell = cells[x][y]
         else:
+            
             if isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Prey):
                 self.stop()
 
@@ -64,7 +65,7 @@ class Item(ABC):
                 self.cell = cells[x][y]
 
             if isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Predator):
-                cells[x][y].eat_prey(self)
+                cells[x][y].get_occupant().eat_prey(self)
                 self.cell.setPixmap(QPixmap("images/void.png"))
                 self.cell.set_occupant(None)
                 self.die()
@@ -117,7 +118,7 @@ class Being(Item):
         self.vision = []
         self.neural_network = NeuralNetwork()
         self.gender = random.choice(['m', 'f'])
-        self.move_cost = 10
+        self.move_cost = 5
         self.outputs = None
         self.best_move = None
         self.random_move = None
@@ -156,7 +157,6 @@ class Being(Item):
 
     def make_random_move(self):
         self.random_move = random.randint(0, 9)
-
         if self.random_move == 0:
             self.move_left()
         elif self.random_move == 1:
@@ -176,7 +176,6 @@ class Being(Item):
 
     def see(self):
         self.vision.clear()
-
         if self.orientation == "down":
             neighbours = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
         elif self.orientation == "up":
@@ -185,10 +184,9 @@ class Being(Item):
             neighbours = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0)]
         else:
             neighbours = [(1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0)]
-
+            
         for x, y in neighbours:
             x, y = self.coordinates[0] + x, self.coordinates[1] + y
-
             if x < 0:
                 x = 9
 
@@ -299,7 +297,7 @@ class Prey(Being):
             self.set_image("images/prey_right.png")
         else:
             self.set_image("images/prey_left.png")
-
+    # TODO
     def die(self):
         pass
 
@@ -321,5 +319,6 @@ class Predator(Being):
         else:
             self.set_image("images/predator_left.png")
 
-    def eat_prey(self):
-        pass
+    def eat_prey(self, prey):
+        self.energy += 10
+        prey.die()

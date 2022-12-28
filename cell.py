@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QLabel
 
 from items import Food, Predator, Prey
 
-
 class Cell(QLabel):
     def __init__(self, x, y):
         super().__init__()
@@ -16,7 +15,6 @@ class Cell(QLabel):
 
     def set_occupant(self, occupant):
         self.occupant = occupant
-
         if occupant:
             self.setPixmap(occupant.get_image())
         else:

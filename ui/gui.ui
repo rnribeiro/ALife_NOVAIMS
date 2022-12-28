@@ -58,7 +58,7 @@
      <rect>
       <x>790</x>
       <y>30</y>
-      <width>261</width>
+      <width>269</width>
       <height>381</height>
      </rect>
     </property>
@@ -66,24 +66,42 @@
      <property name="sizeConstraint">
       <enum>QLayout::SetNoConstraint</enum>
      </property>
-     <item row="3" column="2">
-      <widget class="QSpinBox" name="likelihood_repro_sb">
-       <property name="maximum">
-        <number>100</number>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Likelihood of reproduction (0-100)</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="2">
-      <widget class="QSpinBox" name="mutation_rate_sb"/>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Mutation rate</string>
+       </property>
+      </widget>
      </item>
-     <item row="5" column="2">
-      <widget class="QSpinBox" name="prey_sb">
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Initial energy (0-100)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Maximum number of zizoids</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QSpinBox" name="max_preys_sb">
        <property name="maximum">
         <number>60</number>
        </property>
       </widget>
      </item>
-     <item row="6" column="2">
+     <item row="7" column="1">
       <widget class="QSpinBox" name="predator_sb">
        <property name="minimumSize">
         <size>
@@ -102,14 +120,14 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="label_11">
        <property name="text">
         <string>Energy spent on reproduction</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="2">
+     <item row="9" column="1">
       <widget class="QSpinBox" name="repro_energy_sb">
        <property name="maximum">
         <number>100</number>
@@ -117,27 +135,27 @@
       </widget>
      </item>
      <item row="7" column="0">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>Energy gained from Food</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
         <string>Wsiloids (predators)</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
         <string>Zizoids (preys)</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="2">
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Energy gained from Food</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
       <widget class="QSpinBox" name="food_energy_db">
        <property name="maximum">
         <number>100</number>
@@ -145,67 +163,40 @@
       </widget>
      </item>
      <item row="6" column="1">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+      <widget class="QSpinBox" name="prey_sb">
+       <property name="maximum">
+        <number>60</number>
        </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
+      </widget>
      </item>
-     <item row="0" column="2">
-      <widget class="QLineEdit" name="iterations_edit"/>
-     </item>
-     <item row="1" column="2">
-      <widget class="QSpinBox" name="initial_energy_sb">
+     <item row="1" column="1">
+      <widget class="QSpinBox" name="iterations_sb">
        <property name="maximum">
         <number>100</number>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Initial energy (0-100)</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Iterations</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Likelihood of reproduction (0-100</string>
-       </property>
-      </widget>
+     <item row="3" column="1">
+      <widget class="QSpinBox" name="mutation_rate_sb"/>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Mutation rate</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="0">
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>Maximum number of zizoids</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="2">
-      <widget class="QSpinBox" name="max_preys_sb">
+     <item row="4" column="1">
+      <widget class="QSpinBox" name="likelihood_repro_sb">
        <property name="maximum">
-        <number>60</number>
+        <number>100</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSpinBox" name="initial_energy_sb">
+       <property name="maximum">
+        <number>100</number>
        </property>
       </widget>
      </item>
