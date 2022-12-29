@@ -19,7 +19,10 @@ class MyGUI(QMainWindow):
         uic.loadUi("ui/gui.ui", self)
         self.active = False
         self.items_created = False
+
         self.initialize_grid()
+
+        # Set Predefine Values
         self.iterations_sb.setValue(10000)
         self.initial_energy_sb.setValue(100)
         self.mutation_rate_sb.setValue(2)
@@ -39,12 +42,14 @@ class MyGUI(QMainWindow):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.iterate)
+        # Timer in miliseconds, the lower the timer, the faster the simulation runs
         self.timer.start(10)
 
 
-    # Start timer
+
     def start(self):
         if not self.items_created:
+            # Get values from spin boxes
             items.initial_energy = self.initial_energy_sb.value()
             items.mutation_rate = self.mutation_rate_sb.value()
             items.likelihood_reproduction = self.likelihood_repro_sb.value()
@@ -56,6 +61,7 @@ class MyGUI(QMainWindow):
             self.max_iterations = self.iterations_sb.value()
             self.current_preys = 0
             self.current_predators = 0
+            # Initialize Preys and Predators in the grid
             self.initialize_items()
         self.active = True
 
@@ -63,6 +69,7 @@ class MyGUI(QMainWindow):
     def pause(self):
         self.active = not self.active
 
+    # Clear the grid
     def stop(self):
         self.active = False
         for row in cells:
@@ -99,6 +106,7 @@ class MyGUI(QMainWindow):
                 if not cells[x][y].get_occupant():
                     a = Predator(x, y)
                     break
+        # Create food units
         for i in range(6):
             while True:
                 x, y = random.randint(0, 9), random.randint(0, 14)
@@ -107,7 +115,16 @@ class MyGUI(QMainWindow):
                     break
 
     def iterate(self):
-        if self.active and self.iterations <= self.max_iterations:
+        if self.active and self.iterations < self.max_iterations:
+            # Create a food item in the grid every "food_creation_rate" iterations
+            food_creation_rate = 4
+            if self.iterations % food_creation_rate == 0:
+                while True:
+                    x, y = random.randint(0, 9), random.randint(0, 14)
+                    if not cells[x][y].get_occupant():
+                        a = Food(x, y)
+                        break
+
             for prey in preys[:]:
                 if prey.energy <= 0:
                     preys.remove(prey)

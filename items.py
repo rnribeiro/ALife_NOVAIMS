@@ -19,6 +19,7 @@ reproduction_energy = 0
 max_preys = 0
 
 
+# Item defines any object in a grid cell (food, prey or predator)
 class Item(ABC):
     def __init__(self, x, y):
         self.energy = None
@@ -39,6 +40,7 @@ class Item(ABC):
         pass
 
     def move(self, x, y):
+        # Handle indexes outside the grid
         if x < 0:
             x = 9
         if x > 9:
@@ -55,10 +57,11 @@ class Item(ABC):
             cells[self.x][self.y].set_occupant(self)
             self.lose_mov_energy()
         else:
+            # Prey finds another prey
             if self in preys and cells[x][y].get_occupant() in preys:
                 self.mate(cells[x][y].get_occupant())
 
-            # Prey eats food
+            # Prey finds food
             elif self in preys and cells[x][y].get_occupant() in food_units:
                 self.lose_mov_energy()
                 self.eat_food(cells[x][y].get_occupant())
@@ -67,7 +70,7 @@ class Item(ABC):
                 cells[self.x][self.y].set_occupant(self)
                 self.set_coordinates(x, y)
 
-            # Prey is eaten by Predator
+            # Prey finds a Predator
             elif self in preys and cells[x][y].get_occupant() in predators:
                 self.stop()
 
@@ -86,6 +89,7 @@ class Item(ABC):
             elif (self in predators) and (cells[x][y].get_occupant() in predators):
                 self.stop()
 
+            # Predator finds a prey
             elif (self in predators) and (cells[x][y].get_occupant() in preys):
                 preys.remove(cells[x][y].get_occupant())
                 self.lose_mov_energy()
@@ -179,6 +183,7 @@ class Being(Item):
         else:
             self.stop()
 
+    # Get indexes of neighbours according to the orientation
     def see(self):
         self.vision.clear()
         if self.orientation == "down":
@@ -194,18 +199,14 @@ class Being(Item):
             x, y = self.x + x, self.y + y
             if x < 0:
                 x = 9
-
             if x > 9:
                 x = 0
-
             if y < 0:
                 y = 14
-
             if y > 14:
                 y = 0
-
             type_ = cells[x][y].get_occupant_type_code()
-
+            # Add occupant type to the input layer
             self.vision.append(type_)
 
     def move_left(self):
@@ -313,18 +314,19 @@ class Prey(Being):
         self.energy -= reproduction_energy
         prey.energy -= reproduction_energy
 
-        # Prey reproduce with probability equal to likelihood_reproduction
+        # Preys reproduce with probability equal to likelihood_reproduction
         if random.randint(0, 100) < likelihood_reproduction:
             reproduce(self, prey)
 
 
+# Create a new prey in a random place
 def reproduce(prey1, prey2):
     while True:
         x, y = random.randint(0, 9), random.randint(0, 14)
         if not cells[x][y].get_occupant():
             a = Prey(x, y)
-            print(f"new prey in {x, y}")
-            # Child get left ([0]) and forward left ([1]) vision from prey 1
+
+            # Childs get left ([0]) and forward left ([1]) vision from prey 1
             # and forward right ([4]) vision from prey 2
 
             a.neural_network.synaptic_weights[0] = prey1.neural_network.synaptic_weights[0]
@@ -333,7 +335,7 @@ def reproduce(prey1, prey2):
 
             if random.randint(0, 1000) < mutation_rate:
                 i, j = random.randint(0, 4), random.randint(0, 7)
-                a.neural_network.synaptic_weights[i][j] = random.randint(-1000, 1000)/1000
+                a.neural_network.synaptic_weights[i][j] = random.randint(-1000, 1000) / 1000
 
             interface.child_preys += 1
             break
@@ -346,7 +348,6 @@ class Predator(Being):
 
     def set_orientation(self, orientation):
         self.orientation = orientation
-
         if orientation == "down":
             self.set_image("images/predator_down.png")
         elif orientation == "up":
