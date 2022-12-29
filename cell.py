@@ -15,7 +15,7 @@ class Cell(QLabel):
 
     def set_occupant(self, occupant):
         self.occupant = occupant
-        if occupant:
+        if occupant is not None:
             self.setPixmap(occupant.get_image())
         else:
             self.setPixmap(QPixmap("images/void.png"))

@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from PyQt5.QtGui import QPixmap
 from numpy import argmax
 
+import interface
 from neural_network import NeuralNetwork
 
 cells = []
@@ -21,12 +22,16 @@ max_preys = 0
 class Item(ABC):
     def __init__(self, x, y):
         self.image = None
-        self.coordinates = (x, y)
-        self.cell = cells[x][y]
+        self.x = x
+        self.y = y
         self.set_orientation("up")
+        self.active = True
 
     def get_coordinates(self):
-        return self.coordinates
+        return self.x, self.y
+
+    def set_coordinates(self, x, y):
+        self.x, self.y = x, y
 
     @abstractmethod
     def set_orientation(self, orientation):
@@ -35,64 +40,73 @@ class Item(ABC):
     def move(self, x, y):
         if x < 0:
             x = 9
-
         if x > 9:
             x = 0
-
         if y < 0:
             y = 14
-
         if y > 14:
             y = 0
 
         if not cells[x][y].get_occupant():
-            self.cell.setPixmap(QPixmap("images/void.png"))
-            self.cell.set_occupant(None)
-            self.coordinates = (x, y)
-            self.cell = cells[x][y]
+            print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
+            cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
+            cells[self.x][self.y].set_occupant(None)
+            self.set_coordinates(x, y)
+            self.lose_mov_energy()
         else:
-            
             if isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Prey):
-                self.stop()
+                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
+                # Preys mate with probability 50%
+                if self.gender != cells[x][y].get_occupant().gender and random.randint(0, 100) < 50:
+                    self.mate(cells[x][y].get_occupant())
 
-            if isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Food):
+            # Prey eats food
+            elif isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Food):
+                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
                 self.lose_mov_energy()
                 self.eat_food(cells[x][y].get_occupant())
                 cells[x][y].set_occupant(None)
-                self.cell.setPixmap(QPixmap("images/void.png"))
-                self.cell.set_occupant(None)
-                self.coordinates = (x, y)
-                self.cell = cells[x][y]
+                cells[self.x][self.y].set_occupant(self)
+                self.set_coordinates(x, y)
 
-            if isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Predator):
+            # Prey is eaten by Predator
+            elif isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Predator):
+                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
+                cells[self.x][self.y].set_occupant(None)
                 cells[x][y].get_occupant().eat_prey(self)
-                self.cell.setPixmap(QPixmap("images/void.png"))
-                self.cell.set_occupant(None)
-                self.die()
 
-            if isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Food):
+            # Predator eats food
+            elif isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Food):
+                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
                 self.eat_food(cells[x][y].get_occupant())
                 cells[x][y].set_occupant(None)
-                self.cell.setPixmap(QPixmap("images/void.png"))
-                self.cell.set_occupant(None)
-                self.coordinates = (x, y)
-                self.cell = cells[x][y]
+                cells[self.x][self.y].set_occupant(None)
+                self.set_coordinates(x, y)
+                cells[self.x][self.y].set_occupant(None)
                 self.lose_mov_energy()
 
-            if isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Predator):
+            # Predator finds predator
+            elif isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Predator):
+                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
                 self.stop()
 
-            if isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Prey):
-                self.eat_prey(cells[x][y].get_occupant())
-                self.cell.setPixmap(QPixmap("images/void.png"))
-                self.cell.set_occupant(None)
-                self.coordinates = (x, y)
-                self.cell = cells[x][y]
+            elif isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Prey):
+                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
                 self.lose_mov_energy()
+                cells[self.x][self.y].set_occupant(None)
+                self.set_coordinates(x, y)
+                cells[self.x][self.y].set_occupant(self)
+                self.eat_prey(cells[x][y].get_occupant())
+        if self.energy <= 0:
+            cells[self.x][self.y].set_occupant(None)
+            if isinstance(self, Prey):
+                preys.remove(self)
+            elif isinstance(self, Predator):
+                predators.remove(self)
 
     def set_image(self, image):
         self.image = QPixmap(image)
-        self.cell.set_occupant(self)
+        cells[self.x][self.y].set_occupant(self)
 
     def get_image(self):
         return self.image
@@ -115,6 +129,7 @@ class Being(Item):
     def __init__(self, x, y):
         super().__init__(x, y)
         self.energy = initial_energy
+        self.neighbours = []
         self.vision = []
         self.neural_network = NeuralNetwork()
         self.gender = random.choice(['m', 'f'])
@@ -156,7 +171,7 @@ class Being(Item):
             self.stop()
 
     def make_random_move(self):
-        self.random_move = random.randint(0, 9)
+        self.random_move = random.randint(0, 7)
         if self.random_move == 0:
             self.move_left()
         elif self.random_move == 1:
@@ -184,9 +199,9 @@ class Being(Item):
             neighbours = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0)]
         else:
             neighbours = [(1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0)]
-            
+
         for x, y in neighbours:
-            x, y = self.coordinates[0] + x, self.coordinates[1] + y
+            x, y = self.x + x, self.y + y
             if x < 0:
                 x = 9
 
@@ -205,58 +220,58 @@ class Being(Item):
 
     def move_left(self):
         if self.orientation == "down":
-            self.move(self.coordinates[0], self.coordinates[1] + 1)
+            self.move(self.x, self.y + 1)
             self.set_orientation("right")
         elif self.orientation == "up":
-            self.move(self.coordinates[0], self.coordinates[1] - 1)
+            self.move(self.x, self.y - 1)
             self.set_orientation("left")
         elif self.orientation == "right":
-            self.move(self.coordinates[0] - 1, self.coordinates[1])
+            self.move(self.x - 1, self.y)
             self.set_orientation("up")
         else:
-            self.move(self.coordinates[0] + 1, self.coordinates[1])
+            self.move(self.x + 1, self.y)
             self.set_orientation("down")
 
     def move_right(self):
         if self.orientation == "down":
-            self.move(self.coordinates[0], self.coordinates[1] - 1)
+            self.move(self.x, self.y - 1)
             self.set_orientation("left")
         elif self.orientation == "up":
-            self.move(self.coordinates[0], self.coordinates[1] + 1)
+            self.move(self.x, self.y + 1)
             self.set_orientation("right")
         elif self.orientation == "right":
-            self.move(self.coordinates[0] + 1, self.coordinates[1])
+            self.move(self.x + 1, self.y)
             self.set_orientation("down")
         else:
-            self.move(self.coordinates[0] - 1, self.coordinates[1])
+            self.move(self.x - 1, self.y)
             self.set_orientation("up")
 
     def move_forward(self):
         if self.orientation == "down":
-            self.move(self.coordinates[0] + 1, self.coordinates[1])
+            self.move(self.x + 1, self.y)
             self.set_orientation("down")
         elif self.orientation == "up":
-            self.move(self.coordinates[0] - 1, self.coordinates[1])
+            self.move(self.x - 1, self.y)
             self.set_orientation("up")
         elif self.orientation == "right":
-            self.move(self.coordinates[0], self.coordinates[1] + 1)
+            self.move(self.x, self.y + 1)
             self.set_orientation("right")
         else:
-            self.move(self.coordinates[0], self.coordinates[1] - 1)
+            self.move(self.x, self.y - 1)
             self.set_orientation("left")
 
     def move_back(self):
         if self.orientation == "down":
-            self.move(self.coordinates[0] - 1, self.coordinates[1])
+            self.move(self.x - 1, self.y)
             self.set_orientation("up")
         elif self.orientation == "up":
-            self.move(self.coordinates[0] + 1, self.coordinates[1])
+            self.move(self.x + 1, self.y)
             self.set_orientation("back")
         elif self.orientation == "right":
-            self.move(self.coordinates[0], self.coordinates[1] - 1)
+            self.move(self.x, self.y - 1)
             self.set_orientation("left")
         else:
-            self.move(self.coordinates[0], self.coordinates[1] + 1)
+            self.move(self.x, self.y + 1)
             self.set_orientation("right")
 
     def move_forward_left(self):
@@ -285,10 +300,10 @@ class Prey(Being):
     def __init__(self, x, y):
         super().__init__(x, y)
         preys.append(self)
+        self.dna = [self.gender, self.neural_network.synaptic_weights]
 
     def set_orientation(self, orientation):
         self.orientation = orientation
-
         if orientation == "down":
             self.set_image("images/prey_down.png")
         elif orientation == "up":
@@ -297,9 +312,19 @@ class Prey(Being):
             self.set_image("images/prey_right.png")
         else:
             self.set_image("images/prey_left.png")
-    # TODO
-    def die(self):
-        pass
+
+    def mate(self, prey):
+        self.energy -= reproduction_energy
+        prey.energy -= reproduction_energy
+
+        # Prey reproduce with probability equal to likelihood_reproduction
+        if random.randint(0, 100) < likelihood_reproduction:
+            while True:
+                x, y = random.randint(0, 9), random.randint(0, 14)
+                if not cells[x][y].get_occupant():
+                    a = Prey(x, y)
+                    interface.child_preys += 1
+                    break
 
 
 class Predator(Being):
@@ -320,5 +345,6 @@ class Predator(Being):
             self.set_image("images/predator_left.png")
 
     def eat_prey(self, prey):
-        self.energy += 10
-        prey.die()
+        self.energy += 15
+        cells[prey.x][prey.y].set_occupant(None)
+        preys.remove(prey)

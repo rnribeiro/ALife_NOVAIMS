@@ -4,11 +4,13 @@ from PyQt5 import uic
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QMainWindow
+
+import items
 from cell import Cell
 from items import Prey, Predator, Food
-from items import cells, preys, predators, food_units, initial_energy, mutation_rate, likelihood_reproduction, food_energy, reproduction_energy, max_preys
+from items import cells, preys, predators, food_units
 
-
+child_preys = 0
 
 class MyGUI(QMainWindow):
     def __init__(self):
@@ -35,28 +37,31 @@ class MyGUI(QMainWindow):
         self.food_energy_db.setValue(5)
         self.repro_energy_sb.setValue(20)
         self.max_preys_sb.setValue(20)
+        self.current_preys_sb.setValue(0)
+        self.current_predators_sb.setValue(0)
+        self.child_preys_sb.setValue(0)
 
-        
     # Start timer
     def start(self):
         if not self.items_created:
-            self.initialize_items()
+            items.initial_energy = self.initial_energy_sb.value()
+            items.mutation_rate = self.mutation_rate_sb.value()
+            items.likelihood_reproduction = self.likelihood_repro_sb.value()
+            items.food_energy = self.food_energy_db.value()
+            items.reproduction_energy = self.repro_energy_sb.value()
+            items.max_preys = self.max_preys_sb.value()
             self.items_created = True
             self.iterations = 0
             self.max_iterations = self.iterations_sb.value()
-            initial_energy = self.initial_energy_sb.value()
-            mutation_rate = self.mutation_rate_sb
-            likelihood_reproduction = self.likelihood_repro_sb.value()
-            food_energy = self.food_energy_db.value()
-            reproduction_energy = self.repro_energy_sb.value()
-            max_preys = self.max_preys_sb.value()
+            self.current_preys = 0
+            self.current_predators = 0
+            self.initialize_items()
         self.active = True
 
-    #Pause/resume timer
+    # Pause/resume timer
     def pause(self):
         self.active = not self.active
 
-    
     def stop(self):
         self.active = False
         for row in cells:
@@ -101,13 +106,19 @@ class MyGUI(QMainWindow):
                     break
 
     def iterate(self):
-        if self.active and self.iterations<=self.max_iterations:
-            random.shuffle(preys)
-            random.shuffle(predators)
+        if self.active and self.iterations <= self.max_iterations:
+            self.current_preys = 0
+            self.current_predators = 0
             for prey in preys:
                 prey.make_best_move()
+                self.current_preys +=1
+
             for predator in predators:
                 predator.make_random_move()
-            self.iterations +=1
+                self.current_predators +=1
+
+            self.iterations += 1
             self.iterations_sb.setValue(self.iterations)
-        
+            self.current_preys_sb.setValue(self.current_preys)
+            self.current_predators_sb.setValue(self.current_predators)
+            self.child_preys_sb.setValue(child_preys)

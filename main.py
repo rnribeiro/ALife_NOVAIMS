@@ -9,7 +9,6 @@ wsiloids = Predator
 
 """
 
-
 def main():
     app = QApplication([])
     window = MyGUI()
