@@ -172,7 +172,7 @@
      <item row="1" column="1">
       <widget class="QSpinBox" name="iterations_sb">
        <property name="maximum">
-        <number>100</number>
+        <number>10000</number>
        </property>
       </widget>
      </item>

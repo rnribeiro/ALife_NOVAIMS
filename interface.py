@@ -12,6 +12,7 @@ from items import cells, preys, predators, food_units
 
 child_preys = 0
 
+
 class MyGUI(QMainWindow):
     def __init__(self):
         super(MyGUI, self).__init__()
@@ -19,16 +20,7 @@ class MyGUI(QMainWindow):
         self.active = False
         self.items_created = False
         self.initialize_grid()
-
-        self.start_btn.clicked.connect(self.start)
-        self.pause_btn.clicked.connect(self.pause)
-        self.stop_btn.clicked.connect(self.stop)
-
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.iterate)
-        self.timer.start(1000)
-
-        self.iterations_sb.setValue(100)
+        self.iterations_sb.setValue(10000)
         self.initial_energy_sb.setValue(100)
         self.mutation_rate_sb.setValue(2)
         self.prey_sb.setValue(10)
@@ -40,6 +32,15 @@ class MyGUI(QMainWindow):
         self.current_preys_sb.setValue(0)
         self.current_predators_sb.setValue(0)
         self.child_preys_sb.setValue(0)
+
+        self.start_btn.clicked.connect(self.start)
+        self.pause_btn.clicked.connect(self.pause)
+        self.stop_btn.clicked.connect(self.stop)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.iterate)
+        self.timer.start(10)
+
 
     # Start timer
     def start(self):
@@ -107,18 +108,28 @@ class MyGUI(QMainWindow):
 
     def iterate(self):
         if self.active and self.iterations <= self.max_iterations:
-            self.current_preys = 0
-            self.current_predators = 0
-            for prey in preys:
-                prey.make_best_move()
-                self.current_preys +=1
+            for prey in preys[:]:
+                if prey.energy <= 0:
+                    preys.remove(prey)
+                    cells[prey.get_coordinates()[0]][prey.get_coordinates()[1]].setPixmap(QPixmap("images/void.png"))
+                    cells[prey.get_coordinates()[0]][prey.get_coordinates()[1]].set_occupant(None)
+                    del prey
+                    continue
+                else:
+                    prey.make_best_move()
 
-            for predator in predators:
-                predator.make_random_move()
-                self.current_predators +=1
+            for predator in predators[:]:
+                if predator.energy <= 0:
+                    predators.remove(predator)
+                    cells[predator.get_coordinates()[0]][predator.get_coordinates()[1]].setPixmap(QPixmap("images/void.png"))
+                    cells[predator.get_coordinates()[0]][predator.get_coordinates()[1]].set_occupant(None)
+                    del predator
+                    continue
+                else:
+                    predator.make_random_move()
 
             self.iterations += 1
             self.iterations_sb.setValue(self.iterations)
-            self.current_preys_sb.setValue(self.current_preys)
-            self.current_predators_sb.setValue(self.current_predators)
+            self.current_preys_sb.setValue(preys.__len__())
+            self.current_predators_sb.setValue(predators.__len__())
             self.child_preys_sb.setValue(child_preys)

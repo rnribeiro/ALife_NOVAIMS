@@ -21,6 +21,7 @@ max_preys = 0
 
 class Item(ABC):
     def __init__(self, x, y):
+        self.energy = None
         self.image = None
         self.x = x
         self.y = y
@@ -48,61 +49,51 @@ class Item(ABC):
             y = 0
 
         if not cells[x][y].get_occupant():
-            print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
-            cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
             cells[self.x][self.y].set_occupant(None)
+            cells[x][y].setPixmap(QPixmap("images/void.png"))
             self.set_coordinates(x, y)
+            cells[self.x][self.y].set_occupant(self)
             self.lose_mov_energy()
         else:
-            if isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Prey):
-                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
-                # Preys mate with probability 50%
-                if self.gender != cells[x][y].get_occupant().gender and random.randint(0, 100) < 50:
-                    self.mate(cells[x][y].get_occupant())
+            if self in preys and cells[x][y].get_occupant() in preys:
+                self.mate(cells[x][y].get_occupant())
 
             # Prey eats food
-            elif isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Food):
-                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
+            elif self in preys and cells[x][y].get_occupant() in food_units:
                 self.lose_mov_energy()
                 self.eat_food(cells[x][y].get_occupant())
                 cells[x][y].set_occupant(None)
+                cells[x][y].setPixmap(QPixmap("images/void.png"))
                 cells[self.x][self.y].set_occupant(self)
                 self.set_coordinates(x, y)
 
             # Prey is eaten by Predator
-            elif isinstance(self, Prey) and isinstance(cells[x][y].get_occupant(), Predator):
-                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
-                cells[self.x][self.y].set_occupant(None)
-                cells[x][y].get_occupant().eat_prey(self)
+            elif self in preys and cells[x][y].get_occupant() in predators:
+                self.stop()
 
             # Predator eats food
-            elif isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Food):
-                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
+            elif self in predators and cells[x][y].get_occupant() in food_units:
                 self.eat_food(cells[x][y].get_occupant())
                 cells[x][y].set_occupant(None)
+                cells[x][y].setPixmap(QPixmap("images/void.png"))
                 cells[self.x][self.y].set_occupant(None)
+                cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
                 self.set_coordinates(x, y)
-                cells[self.x][self.y].set_occupant(None)
+                cells[self.x][self.y].set_occupant(self)
                 self.lose_mov_energy()
 
             # Predator finds predator
-            elif isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Predator):
-                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
+            elif (self in predators) and (cells[x][y].get_occupant() in predators):
                 self.stop()
 
-            elif isinstance(self, Predator) and isinstance(cells[x][y].get_occupant(), Prey):
-                print(f"self = {type(self)}, cells[x][y] = {type(cells[x][y].get_occupant())}")
+            elif (self in predators) and (cells[x][y].get_occupant() in preys):
+                preys.remove(cells[x][y].get_occupant())
                 self.lose_mov_energy()
                 cells[self.x][self.y].set_occupant(None)
+                cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
                 self.set_coordinates(x, y)
                 cells[self.x][self.y].set_occupant(self)
-                self.eat_prey(cells[x][y].get_occupant())
-        if self.energy <= 0:
-            cells[self.x][self.y].set_occupant(None)
-            if isinstance(self, Prey):
-                preys.remove(self)
-            elif isinstance(self, Predator):
-                predators.remove(self)
+                self.energy += 15
 
     def set_image(self, image):
         self.image = QPixmap(image)
@@ -132,8 +123,7 @@ class Being(Item):
         self.neighbours = []
         self.vision = []
         self.neural_network = NeuralNetwork()
-        self.gender = random.choice(['m', 'f'])
-        self.move_cost = 5
+        self.move_cost = 1
         self.outputs = None
         self.best_move = None
         self.random_move = None
@@ -283,7 +273,14 @@ class Being(Item):
         self.move_right()
 
     def stop(self):
-        pass
+        if self.orientation == "down":
+            self.set_orientation("down")
+        elif self.orientation == "up":
+            self.set_orientation("up")
+        elif self.orientation == "right":
+            self.set_orientation("right")
+        else:
+            self.set_orientation("left")
 
     def rotate(self):
         if self.orientation == "down":
@@ -300,7 +297,6 @@ class Prey(Being):
     def __init__(self, x, y):
         super().__init__(x, y)
         preys.append(self)
-        self.dna = [self.gender, self.neural_network.synaptic_weights]
 
     def set_orientation(self, orientation):
         self.orientation = orientation
@@ -319,12 +315,28 @@ class Prey(Being):
 
         # Prey reproduce with probability equal to likelihood_reproduction
         if random.randint(0, 100) < likelihood_reproduction:
-            while True:
-                x, y = random.randint(0, 9), random.randint(0, 14)
-                if not cells[x][y].get_occupant():
-                    a = Prey(x, y)
-                    interface.child_preys += 1
-                    break
+            reproduce(self, prey)
+
+
+def reproduce(prey1, prey2):
+    while True:
+        x, y = random.randint(0, 9), random.randint(0, 14)
+        if not cells[x][y].get_occupant():
+            a = Prey(x, y)
+            print(f"new prey in {x, y}")
+            # Child get left ([0]) and forward left ([1]) vision from prey 1
+            # and forward right ([4]) vision from prey 2
+
+            a.neural_network.synaptic_weights[0] = prey1.neural_network.synaptic_weights[0]
+            a.neural_network.synaptic_weights[1] = prey1.neural_network.synaptic_weights[1]
+            a.neural_network.synaptic_weights[4] = prey2.neural_network.synaptic_weights[4]
+
+            if random.randint(0, 1000) < mutation_rate:
+                i, j = random.randint(0, 4), random.randint(0, 7)
+                a.neural_network.synaptic_weights[i][j] = random.randint(-1000, 1000)/1000
+
+            interface.child_preys += 1
+            break
 
 
 class Predator(Being):
@@ -343,8 +355,3 @@ class Predator(Being):
             self.set_image("images/predator_right.png")
         else:
             self.set_image("images/predator_left.png")
-
-    def eat_prey(self, prey):
-        self.energy += 15
-        cells[prey.x][prey.y].set_occupant(None)
-        preys.remove(prey)
