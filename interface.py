@@ -118,7 +118,7 @@ class MyGUI(QMainWindow):
         if self.active and self.iterations < self.max_iterations:
             # Create a food item in the grid every "food_creation_rate" iterations
             food_creation_rate = 4
-            if self.iterations % food_creation_rate == 0:
+            if self.iterations % food_creation_rate == 0 and food_units.__len__() < 30:
                 while True:
                     x, y = random.randint(0, 9), random.randint(0, 14)
                     if not cells[x][y].get_occupant():
