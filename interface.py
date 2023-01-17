@@ -1,5 +1,4 @@
 import random
-import time
 
 from PyQt5 import uic
 from PyQt5.QtCore import QTimer
@@ -43,7 +42,7 @@ class MyGUI(QMainWindow):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.iterate)
-        # Timer in miliseconds, the lower the timer, the faster the simulation runs
+        # Timer in milliseconds, the lower the timer, the faster the simulation runs
         self.timer.start(100)
 
     def start(self):
