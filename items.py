@@ -39,66 +39,6 @@ class Item(ABC):
     def set_orientation(self, orientation):
         pass
 
-    def move(self, x, y):
-        # Handle indexes outside the grid
-        if x < 0:
-            x = 9
-        if x > 9:
-            x = 0
-        if y < 0:
-            y = 14
-        if y > 14:
-            y = 0
-
-        if not cells[x][y].get_occupant():
-            cells[self.x][self.y].set_occupant(None)
-            cells[x][y].setPixmap(QPixmap("images/void.png"))
-            self.set_coordinates(x, y)
-            cells[self.x][self.y].set_occupant(self)
-            self.lose_mov_energy()
-        else:
-            # Prey finds another prey
-            if self in preys and cells[x][y].get_occupant() in preys:
-                self.mate(cells[x][y].get_occupant())
-
-            # Prey finds food
-            elif self in preys and cells[x][y].get_occupant() in food_units:
-                self.lose_mov_energy()
-                self.eat_food(cells[x][y].get_occupant())
-                cells[x][y].set_occupant(None)
-                cells[x][y].setPixmap(QPixmap("images/void.png"))
-                cells[self.x][self.y].set_occupant(self)
-                self.set_coordinates(x, y)
-
-            # Prey finds a Predator
-            elif self in preys and cells[x][y].get_occupant() in predators:
-                self.stop()
-
-            # Predator eats food
-            elif self in predators and cells[x][y].get_occupant() in food_units:
-                self.eat_food(cells[x][y].get_occupant())
-                cells[x][y].set_occupant(None)
-                cells[x][y].setPixmap(QPixmap("images/void.png"))
-                cells[self.x][self.y].set_occupant(None)
-                cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
-                self.set_coordinates(x, y)
-                cells[self.x][self.y].set_occupant(self)
-                self.lose_mov_energy()
-
-            # Predator finds predator
-            elif (self in predators) and (cells[x][y].get_occupant() in predators):
-                self.stop()
-
-            # Predator finds a prey
-            elif (self in predators) and (cells[x][y].get_occupant() in preys):
-                preys.remove(cells[x][y].get_occupant())
-                self.lose_mov_energy()
-                cells[self.x][self.y].set_occupant(None)
-                cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
-                self.set_coordinates(x, y)
-                cells[self.x][self.y].set_occupant(self)
-                self.energy += 15
-
     def set_image(self, image):
         self.image = QPixmap(image)
         cells[self.x][self.y].set_occupant(self)
@@ -123,6 +63,7 @@ class Food(Item):
 class Being(Item):
     def __init__(self, x, y):
         super().__init__(x, y)
+        self.orientation = "up"
         self.energy = initial_energy
         self.neighbours = []
         self.vision = []
@@ -136,52 +77,76 @@ class Being(Item):
     def set_orientation(self, orientation):
         pass
 
-    def lose_mov_energy(self):
+    @abstractmethod
+    def make_move(self):
+        pass
+
+    def update(self, x, y):
+        # Handle indexes outside the grid
+        if x < 0:
+            x = 9
+        if x > 9:
+            x = 0
+        if y < 0:
+            y = 14
+        if y > 14:
+            y = 0
+
+        if not cells[x][y].get_occupant():
+            cells[self.x][self.y].set_occupant(None)
+            cells[x][y].setPixmap(QPixmap("images/void.png"))
+            self.set_coordinates(x, y)
+            cells[self.x][self.y].set_occupant(self)
+            self.lose_move_energy()
+        else:
+            # Prey finds another prey
+            if isinstance(self, Prey) and cells[x][y].get_occupant() in preys:
+                self.mate(cells[x][y].get_occupant())
+
+            # Prey finds food
+            elif isinstance(self, Prey) and cells[x][y].get_occupant() in food_units:
+                self.lose_move_energy()
+                self.eat_food(cells[x][y].get_occupant())
+                cells[x][y].set_occupant(None)
+                cells[x][y].setPixmap(QPixmap("images/void.png"))
+                cells[self.x][self.y].set_occupant(self)
+                self.set_coordinates(x, y)
+
+            # Prey finds a Predator
+            elif isinstance(self, Prey) and cells[x][y].get_occupant() in predators:
+                self.stop()
+
+            # Predator eats food
+            elif isinstance(self, Predator) and cells[x][y].get_occupant() in food_units:
+                self.eat_food(cells[x][y].get_occupant())
+                cells[x][y].set_occupant(None)
+                cells[x][y].setPixmap(QPixmap("images/void.png"))
+                cells[self.x][self.y].set_occupant(None)
+                cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
+                self.set_coordinates(x, y)
+                cells[self.x][self.y].set_occupant(self)
+                self.lose_move_energy()
+
+            # Predator finds predator
+            elif isinstance(self, Predator) and (cells[x][y].get_occupant() in predators):
+                self.stop()
+
+            # Predator finds a prey
+            elif isinstance(self, Predator) and (cells[x][y].get_occupant() in preys):
+                preys.remove(cells[x][y].get_occupant())
+                self.lose_move_energy()
+                cells[self.x][self.y].set_occupant(None)
+                cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
+                self.set_coordinates(x, y)
+                cells[self.x][self.y].set_occupant(self)
+                self.energy += 15
+
+    def lose_move_energy(self):
         self.energy -= self.move_cost
 
     def eat_food(self, food):
         self.energy += food.get_energy()
-
-    def make_best_move(self):
-        self.see()
-        self.outputs = self.neural_network.learn(self.vision)
-        self.best_move = argmax(self.outputs)
-
-        if self.best_move == 0:
-            self.move_left()
-        elif self.best_move == 1:
-            self.move_forward_left()
-        elif self.best_move == 2:
-            self.move_forward()
-        elif self.best_move == 3:
-            self.move_forward_right()
-        elif self.best_move == 4:
-            self.move_right()
-        elif self.best_move == 5:
-            self.move_back()
-        elif self.best_move == 6:
-            self.rotate()
-        else:
-            self.stop()
-
-    def make_random_move(self):
-        self.random_move = random.randint(0, 7)
-        if self.random_move == 0:
-            self.move_left()
-        elif self.random_move == 1:
-            self.move_forward_left()
-        elif self.random_move == 2:
-            self.move_forward()
-        elif self.random_move == 3:
-            self.move_forward_right()
-        elif self.random_move == 4:
-            self.move_right()
-        elif self.random_move == 5:
-            self.move_back()
-        elif self.random_move == 6:
-            self.rotate()
-        else:
-            self.stop()
+        del food_units[-1]
 
     # Get indexes of neighbours according to the orientation
     def see(self):
@@ -211,58 +176,58 @@ class Being(Item):
 
     def move_left(self):
         if self.orientation == "down":
-            self.move(self.x, self.y + 1)
+            self.update(self.x, self.y + 1)
             self.set_orientation("right")
         elif self.orientation == "up":
-            self.move(self.x, self.y - 1)
+            self.update(self.x, self.y - 1)
             self.set_orientation("left")
         elif self.orientation == "right":
-            self.move(self.x - 1, self.y)
+            self.update(self.x - 1, self.y)
             self.set_orientation("up")
         else:
-            self.move(self.x + 1, self.y)
+            self.update(self.x + 1, self.y)
             self.set_orientation("down")
 
     def move_right(self):
         if self.orientation == "down":
-            self.move(self.x, self.y - 1)
+            self.update(self.x, self.y - 1)
             self.set_orientation("left")
         elif self.orientation == "up":
-            self.move(self.x, self.y + 1)
+            self.update(self.x, self.y + 1)
             self.set_orientation("right")
         elif self.orientation == "right":
-            self.move(self.x + 1, self.y)
+            self.update(self.x + 1, self.y)
             self.set_orientation("down")
         else:
-            self.move(self.x - 1, self.y)
+            self.update(self.x - 1, self.y)
             self.set_orientation("up")
 
     def move_forward(self):
         if self.orientation == "down":
-            self.move(self.x + 1, self.y)
+            self.update(self.x + 1, self.y)
             self.set_orientation("down")
         elif self.orientation == "up":
-            self.move(self.x - 1, self.y)
+            self.update(self.x - 1, self.y)
             self.set_orientation("up")
         elif self.orientation == "right":
-            self.move(self.x, self.y + 1)
+            self.update(self.x, self.y + 1)
             self.set_orientation("right")
         else:
-            self.move(self.x, self.y - 1)
+            self.update(self.x, self.y - 1)
             self.set_orientation("left")
 
     def move_back(self):
         if self.orientation == "down":
-            self.move(self.x - 1, self.y)
+            self.update(self.x - 1, self.y)
             self.set_orientation("up")
         elif self.orientation == "up":
-            self.move(self.x + 1, self.y)
+            self.update(self.x + 1, self.y)
             self.set_orientation("back")
         elif self.orientation == "right":
-            self.move(self.x, self.y - 1)
+            self.update(self.x, self.y - 1)
             self.set_orientation("left")
         else:
-            self.move(self.x, self.y + 1)
+            self.update(self.x, self.y + 1)
             self.set_orientation("right")
 
     def move_forward_left(self):
@@ -310,6 +275,28 @@ class Prey(Being):
         else:
             self.set_image("images/prey_left.png")
 
+    def make_move(self):
+        self.see()
+        self.outputs = self.neural_network.learn(self.vision)
+        self.best_move = argmax(self.outputs)
+
+        if self.best_move == 0:
+            self.move_left()
+        elif self.best_move == 1:
+            self.move_forward_left()
+        elif self.best_move == 2:
+            self.move_forward()
+        elif self.best_move == 3:
+            self.move_forward_right()
+        elif self.best_move == 4:
+            self.move_right()
+        elif self.best_move == 5:
+            self.move_back()
+        elif self.best_move == 6:
+            self.rotate()
+        else:
+            self.stop()
+
     def mate(self, prey):
         self.energy -= reproduction_energy
         prey.energy -= reproduction_energy
@@ -326,7 +313,7 @@ def reproduce(prey1, prey2):
         if not cells[x][y].get_occupant():
             a = Prey(x, y)
 
-            # Childs get left ([0]) and forward left ([1]) vision from prey 1
+            # Child gets left ([0]) and forward left ([1]) vision from prey 1
             # and forward right ([4]) vision from prey 2
 
             a.neural_network.synaptic_weights[0] = prey1.neural_network.synaptic_weights[0]
@@ -356,3 +343,22 @@ class Predator(Being):
             self.set_image("images/predator_right.png")
         else:
             self.set_image("images/predator_left.png")
+
+    def make_move(self):
+        self.random_move = random.randint(0, 7)
+        if self.random_move == 0:
+            self.move_left()
+        elif self.random_move == 1:
+            self.move_forward_left()
+        elif self.random_move == 2:
+            self.move_forward()
+        elif self.random_move == 3:
+            self.move_forward_right()
+        elif self.random_move == 4:
+            self.move_right()
+        elif self.random_move == 5:
+            self.move_back()
+        elif self.random_move == 6:
+            self.rotate()
+        else:
+            self.stop()

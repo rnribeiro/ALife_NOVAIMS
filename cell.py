@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QLabel
 
 from items import Food, Predator, Prey
 
+
 class Cell(QLabel):
     def __init__(self, x, y):
         super().__init__()

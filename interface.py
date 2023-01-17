@@ -1,4 +1,5 @@
 import random
+import time
 
 from PyQt5 import uic
 from PyQt5.QtCore import QTimer
@@ -43,9 +44,7 @@ class MyGUI(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.iterate)
         # Timer in miliseconds, the lower the timer, the faster the simulation runs
-        self.timer.start(10)
-
-
+        self.timer.start(100)
 
     def start(self):
         if not self.items_created:
@@ -115,17 +114,15 @@ class MyGUI(QMainWindow):
                     break
 
     def iterate(self):
-        if self.active and self.iterations < self.max_iterations:
+        if self.active and self.iterations < self.max_iterations and predators:
             # Create a food item in the grid every "food_creation_rate" iterations
             food_creation_rate = 4
             if self.iterations % food_creation_rate == 0 and food_units.__len__() < 30:
-                while True:
-                    x, y = random.randint(0, 9), random.randint(0, 14)
-                    if not cells[x][y].get_occupant():
-                        a = Food(x, y)
-                        break
+                x, y = random.randint(0, 9), random.randint(0, 14)
+                if not cells[x][y].get_occupant():
+                    a = Food(x, y)
 
-            for prey in preys[:]:
+            for prey in preys:
                 if prey.energy <= 0:
                     preys.remove(prey)
                     cells[prey.get_coordinates()[0]][prey.get_coordinates()[1]].setPixmap(QPixmap("images/void.png"))
@@ -133,9 +130,9 @@ class MyGUI(QMainWindow):
                     del prey
                     continue
                 else:
-                    prey.make_best_move()
+                    prey.make_move()
 
-            for predator in predators[:]:
+            for predator in predators:
                 if predator.energy <= 0:
                     predators.remove(predator)
                     cells[predator.get_coordinates()[0]][predator.get_coordinates()[1]].setPixmap(QPixmap("images/void.png"))
@@ -143,7 +140,7 @@ class MyGUI(QMainWindow):
                     del predator
                     continue
                 else:
-                    predator.make_random_move()
+                    predator.make_move()
 
             self.iterations += 1
             self.iterations_sb.setValue(self.iterations)
