@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1092</width>
-    <height>705</height>
+    <width>1080</width>
+    <height>687</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,9 +17,9 @@
    <widget class="QPushButton" name="start_btn">
     <property name="geometry">
      <rect>
-      <x>750</x>
+      <x>730</x>
       <y>430</y>
-      <width>91</width>
+      <width>81</width>
       <height>31</height>
      </rect>
     </property>
@@ -30,9 +30,9 @@
    <widget class="QPushButton" name="pause_btn">
     <property name="geometry">
      <rect>
-      <x>850</x>
+      <x>830</x>
       <y>430</y>
-      <width>91</width>
+      <width>81</width>
       <height>31</height>
      </rect>
     </property>
@@ -43,7 +43,7 @@
    <widget class="QPushButton" name="stop_btn">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>930</x>
       <y>430</y>
       <width>81</width>
       <height>31</height>
@@ -56,9 +56,9 @@
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>790</x>
+      <x>728</x>
       <y>30</y>
-      <width>269</width>
+      <width>281</width>
       <height>381</height>
      </rect>
     </property>
@@ -207,8 +207,8 @@
      <rect>
       <x>30</x>
       <y>30</y>
-      <width>691</width>
-      <height>531</height>
+      <width>661</width>
+      <height>431</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="table">
@@ -223,9 +223,9 @@
    <widget class="QWidget" name="gridLayoutWidget_3">
     <property name="geometry">
      <rect>
-      <x>790</x>
+      <x>728</x>
       <y>470</y>
-      <width>269</width>
+      <width>281</width>
       <height>151</height>
      </rect>
     </property>
@@ -235,6 +235,9 @@
      </property>
      <item row="1" column="1">
       <widget class="QSpinBox" name="current_preys_sb">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="maximum">
         <number>100</number>
        </property>
@@ -243,7 +246,7 @@
      <item row="3" column="1">
       <widget class="QSpinBox" name="child_preys_sb">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -256,6 +259,9 @@
      </item>
      <item row="2" column="1">
       <widget class="QSpinBox" name="current_predators_sb">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="maximum">
         <number>100</number>
        </property>
@@ -277,13 +283,23 @@
      </item>
     </layout>
    </widget>
+   <widget class="QTextBrowser" name="log_label">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>470</y>
+      <width>621</width>
+      <height>151</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1092</width>
+     <width>1080</width>
      <height>21</height>
     </rect>
    </property>

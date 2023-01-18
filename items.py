@@ -17,6 +17,7 @@ likelihood_reproduction = 0
 food_energy = 0
 reproduction_energy = 0
 max_preys = 0
+log = "Events log"
 
 
 # Item defines any object in a grid cell (food, prey or predator)
@@ -59,7 +60,6 @@ class Food(Item):
     def get_energy(self):
         return self.energy
 
-
 class Being(Item):
     def __init__(self, x, y):
         super().__init__(x, y)
@@ -68,7 +68,7 @@ class Being(Item):
         self.neighbours = []
         self.vision = []
         self.neural_network = NeuralNetwork()
-        self.move_cost = 1
+        self.move_cost = 3
         self.outputs = None
         self.best_move = None
         self.random_move = None
@@ -82,6 +82,7 @@ class Being(Item):
         pass
 
     def update(self, x, y):
+        global log
         # Handle indexes outside the grid
         if x < 0:
             x = 9
@@ -94,10 +95,11 @@ class Being(Item):
 
         if not cells[x][y].get_occupant():
             cells[self.x][self.y].set_occupant(None)
-            cells[x][y].setPixmap(QPixmap("images/void.png"))
+            cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
             self.set_coordinates(x, y)
             cells[self.x][self.y].set_occupant(self)
             self.lose_move_energy()
+            log = f"{self.__class__.__name__} moved\n" + log
         else:
             # Prey finds another prey
             if isinstance(self, Prey) and cells[x][y].get_occupant() in preys:
@@ -107,10 +109,11 @@ class Being(Item):
             elif isinstance(self, Prey) and cells[x][y].get_occupant() in food_units:
                 self.lose_move_energy()
                 self.eat_food(cells[x][y].get_occupant())
-                cells[x][y].set_occupant(None)
-                cells[x][y].setPixmap(QPixmap("images/void.png"))
-                cells[self.x][self.y].set_occupant(self)
+                cells[self.x][self.y].set_occupant(None)
+                cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
                 self.set_coordinates(x, y)
+                cells[self.x][self.y].set_occupant(self)
+                log = "Prey ate food\n" + log
 
             # Prey finds a Predator
             elif isinstance(self, Prey) and cells[x][y].get_occupant() in predators:
@@ -118,14 +121,13 @@ class Being(Item):
 
             # Predator eats food
             elif isinstance(self, Predator) and cells[x][y].get_occupant() in food_units:
+                self.lose_move_energy()
                 self.eat_food(cells[x][y].get_occupant())
-                cells[x][y].set_occupant(None)
-                cells[x][y].setPixmap(QPixmap("images/void.png"))
                 cells[self.x][self.y].set_occupant(None)
                 cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
                 self.set_coordinates(x, y)
                 cells[self.x][self.y].set_occupant(self)
-                self.lose_move_energy()
+                log = "Predator ate food\n" + log
 
             # Predator finds predator
             elif isinstance(self, Predator) and (cells[x][y].get_occupant() in predators):
@@ -133,13 +135,17 @@ class Being(Item):
 
             # Predator finds a prey
             elif isinstance(self, Predator) and (cells[x][y].get_occupant() in preys):
-                preys.remove(cells[x][y].get_occupant())
                 self.lose_move_energy()
+                if self.energy <= 85:
+                    self.energy += 10
+                else:
+                    self.energy = 100
+                preys.remove(cells[x][y].get_occupant())
                 cells[self.x][self.y].set_occupant(None)
                 cells[self.x][self.y].setPixmap(QPixmap("images/void.png"))
                 self.set_coordinates(x, y)
                 cells[self.x][self.y].set_occupant(self)
-                self.energy += 15
+                log = "Predator ate Prey\n" + log
 
     def lose_move_energy(self):
         self.energy -= self.move_cost
@@ -231,12 +237,33 @@ class Being(Item):
             self.set_orientation("right")
 
     def move_forward_left(self):
-        self.move_left()
-        self.move_right()
+        if self.orientation == "down":
+            self.update(self.x + 1, self.y+1)
+            self.set_orientation("down")
+        elif self.orientation == "up":
+            self.update(self.x -1, self.y-1)
+            self.set_orientation("up")
+        elif self.orientation == "left":
+            self.update(self.x-1, self.y + 1)
+            self.set_orientation("left")
+        else:
+            self.update(self.x+1, self.y - 1)
+            self.set_orientation("right")
+
 
     def move_forward_right(self):
-        self.move_left()
-        self.move_right()
+        if self.orientation == "down":
+            self.update(self.x - 1, self.y + 1)
+            self.set_orientation("down")
+        elif self.orientation == "up":
+            self.update(self.x + 1, self.y - 1)
+            self.set_orientation("up")
+        elif self.orientation == "left":
+            self.update(self.x - 1, self.y - 1)
+            self.set_orientation("left")
+        else:
+            self.update(self.x + 1, self.y + 1)
+            self.set_orientation("right")
 
     def stop(self):
         if self.orientation == "down":
@@ -262,6 +289,7 @@ class Being(Item):
 class Prey(Being):
     def __init__(self, x, y):
         super().__init__(x, y)
+        self.set_orientation("up")
         preys.append(self)
 
     def set_orientation(self, orientation):
@@ -304,11 +332,13 @@ class Prey(Being):
         # Preys reproduce with probability equal to likelihood_reproduction
         if random.randint(0, 100) < likelihood_reproduction:
             reproduce(self, prey)
+            global log
+            log = f"Two preys reproduced\n" + log
 
 
 # Create a new prey in a random place
 def reproduce(prey1, prey2):
-    while True:
+    while True and max_preys >= len(preys):
         x, y = random.randint(0, 9), random.randint(0, 14)
         if not cells[x][y].get_occupant():
             a = Prey(x, y)
@@ -322,7 +352,8 @@ def reproduce(prey1, prey2):
 
             if random.randint(0, 1000) < mutation_rate:
                 i, j = random.randint(0, 4), random.randint(0, 7)
-                a.neural_network.synaptic_weights[i][j] = random.randint(-1000, 1000) / 1000
+                l, k = random.randint(0, 4), random.randint(0, 7)
+                a.neural_network.synaptic_weights[i][j], a.neural_network.synaptic_weights[l][k] = a.neural_network.synaptic_weights[l][k], a.neural_network.synaptic_weights[i][j]
 
             interface.child_preys += 1
             break
@@ -332,6 +363,7 @@ class Predator(Being):
     def __init__(self, x, y):
         super().__init__(x, y)
         predators.append(self)
+        self.set_orientation("up")
 
     def set_orientation(self, orientation):
         self.orientation = orientation

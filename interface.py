@@ -54,6 +54,7 @@ class MyGUI(QMainWindow):
             items.food_energy = self.food_energy_db.value()
             items.reproduction_energy = self.repro_energy_sb.value()
             items.max_preys = self.max_preys_sb.value()
+            items.log = ""
             self.items_created = True
             self.iterations = 0
             self.max_iterations = self.iterations_sb.value()
@@ -78,6 +79,21 @@ class MyGUI(QMainWindow):
         predators.clear()
         food_units.clear()
 
+        self.iterations_sb.setValue(10000)
+        self.initial_energy_sb.setValue(100)
+        self.mutation_rate_sb.setValue(2)
+        self.prey_sb.setValue(10)
+        self.predator_sb.setValue(10)
+        self.likelihood_repro_sb.setValue(50)
+        self.food_energy_db.setValue(5)
+        self.repro_energy_sb.setValue(20)
+        self.max_preys_sb.setValue(20)
+        self.current_preys_sb.setValue(0)
+        self.current_predators_sb.setValue(0)
+        self.child_preys_sb.setValue(0)
+        items.log = ""
+        self.log_label.setText(items.log)
+
         self.items_created = False
 
     def initialize_grid(self):
@@ -92,7 +108,7 @@ class MyGUI(QMainWindow):
     def initialize_items(self):
         prey_initial_count = self.prey_sb.value()
         for i in range(prey_initial_count):
-            while True:
+            while True and len(preys)<= items.max_preys:
                 x, y = random.randint(0, 9), random.randint(0, 14)
                 if not cells[x][y].get_occupant():
                     a = Prey(x, y)
@@ -142,7 +158,20 @@ class MyGUI(QMainWindow):
                     predator.make_move()
 
             self.iterations += 1
+            items.log = f"-----  Iteration {self.iterations}  ----- \n{items.log}"
+            self.log_label.setText(items.log)
+            items.log = "\n" + items.log
             self.iterations_sb.setValue(self.iterations)
             self.current_preys_sb.setValue(len(preys))
             self.current_predators_sb.setValue(len(predators))
             self.child_preys_sb.setValue(child_preys)
+
+        elif not preys and self.active:
+            items.log = f"Predators won \n{items.log}"
+            self.log_label.setText(items.log)
+            self.active = False
+
+        elif not predators and self.active:
+            items.log = f"Preys won \n{items.log}"
+            self.log_label.setText(items.log)
+            self.active = False
