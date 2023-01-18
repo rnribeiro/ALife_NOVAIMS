@@ -113,7 +113,7 @@ class MyGUI(QMainWindow):
                     break
 
     def iterate(self):
-        if self.active and self.iterations < self.max_iterations and predators:
+        if self.active and self.iterations < self.max_iterations and predators and preys:
             # Create a food item in the grid every "food_creation_rate" iterations
             food_creation_rate = 4
             if self.iterations % food_creation_rate == 0 and food_units.__len__() < 30:
@@ -143,6 +143,6 @@ class MyGUI(QMainWindow):
 
             self.iterations += 1
             self.iterations_sb.setValue(self.iterations)
-            self.current_preys_sb.setValue(preys.__len__())
-            self.current_predators_sb.setValue(predators.__len__())
+            self.current_preys_sb.setValue(len(preys))
+            self.current_predators_sb.setValue(len(predators))
             self.child_preys_sb.setValue(child_preys)
